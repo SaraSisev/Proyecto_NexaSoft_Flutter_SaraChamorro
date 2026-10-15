@@ -30,11 +30,20 @@ class GestorIncidencias {
   }
 
   Future<void> cambiarEstado(String id, String estado) async {
+    var huboCambios = false;
+
     for (var i = 0; i < incidencias.length; i++) {
       if (incidencias[i].id == id) {
-        incidencias[i].estado = estado;
+        if (incidencias[i].estado != estado) {
+          incidencias[i].estado = estado;
+          huboCambios = true;
+        }
         break;
       }
+    }
+
+    if (huboCambios) {
+      await datos.guardar(incidencias);
     }
   }
 
