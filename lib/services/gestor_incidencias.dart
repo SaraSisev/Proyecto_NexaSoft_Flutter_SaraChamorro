@@ -12,10 +12,6 @@ class GestorIncidencias {
         incidencias.where((x) => x.estado == 'Pendiente').length;
   }
 
-  /*List<Incidencia> buscar(String texto) {
-    if (texto.trim().isEmpty) return incidencias;
-    return incidencias.where((x) => x.titulo.contains(texto)).toList();
-  }*/
   List<Incidencia> buscar(String texto) {
     final consulta = texto.trim().toLowerCase();
     if (consulta.isEmpty) return incidencias;
@@ -43,8 +39,13 @@ class GestorIncidencias {
 
     for (var i = 0; i < incidencias.length; i++) {
       if (incidencias[i].id == id) {
-        if (incidencias[i].estado != estado) {
+        final anterior = incidencias[i].estado;
+        if (anterior != estado) {
           incidencias[i].estado = estado;
+          
+          if (anterior == 'Pendiente') cantidadPendientes--;
+          if (estado == 'Pendiente') cantidadPendientes++;
+
           huboCambios = true;
         }
         break;
