@@ -12,9 +12,18 @@ class GestorIncidencias {
         incidencias.where((x) => x.estado == 'Pendiente').length;
   }
 
-  List<Incidencia> buscar(String texto) {
-    if (texto.trim().isEmpty) return incidencias;
-    return incidencias.where((x) => x.titulo.contains(texto)).toList();
+  List<Incidencia> buscar(String texto, {String? estado, String? prioridad}) {
+    final consulta = texto.trim().toLowerCase();
+
+    return incidencias.where((x) {
+      final coincideTexto = consulta.isEmpty ||
+          x.titulo.toLowerCase().contains(consulta) ||
+          x.descripcion.toLowerCase().contains(consulta);
+      final coincideEstado = estado == null || x.estado == estado;
+      final coincidePrioridad = prioridad == null || x.prioridad == prioridad;
+
+      return coincideTexto && coincideEstado && coincidePrioridad;
+    }).toList();
   }
 
   Incidencia? porId(String id) {
@@ -30,11 +39,44 @@ class GestorIncidencias {
   }
 
   Future<void> cambiarEstado(String id, String estado) async {
+    var huboCambios = false;
+
     for (var i = 0; i < incidencias.length; i++) {
       if (incidencias[i].id == id) {
-        incidencias[i].estado = estado;
+        final anterior = incidencias[i].estado;
+        if (anterior != estado) {
+          incidencias[i].estado = estado;
+          
+          if (anterior == 'Pendiente') cantidadPendientes--;
+          if (estado == 'Pendiente') cantidadPendientes++;
+
+          huboCambios = true;
+        }
         break;
       }
+    }
+
+    if (huboCambios) {
+      await datos.guardar(incidencias);
+    }
+  }
+
+  cambiarPrioridad(String id, String prioridad) async {
+    var huboCambios = false;
+
+    for (var i = 0; i < incidencias.length; i++) {
+      if (incidencias[i].id == id) {
+        final anterior = incidencias[i].prioridad;
+        if (anterior != prioridad) {
+          incidencias[i].prioridad = prioridad;
+          huboCambios = true;
+        }
+        break;
+      }
+    }
+
+    if (huboCambios) {
+      await datos.guardar(incidencias);
     }
   }
 
@@ -47,6 +89,7 @@ class GestorIncidencias {
       cliente: cliente,
       categoria: categoria,
       estado: 'Pendiente',
+      prioridad: 'Media',
       fecha: DateTime.now().toIso8601String().split('T').first,
     );
     incidencias.insert(0, nuevo);
